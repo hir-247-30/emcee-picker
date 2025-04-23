@@ -1,0 +1,39 @@
+{
+  "name": "emcee-picker",
+  "version": "1.0.0",
+  "main": "src/handlers/main.ts",
+  "type": "module",
+  "scripts": {
+    "main": "tsx src/handlers/main.ts",
+    "format": "npx eslint . --fix --ext .ts",
+    "test": "npx tsc --noEmit && npx eslint . --ext .ts"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hir-247-30/emcee-picker.git"
+  },
+  "author": "hir-247-30",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hir-247-30/emcee-picker/issues"
+  },
+  "homepage": "https://github.com/hir-247-30/emcee-picker#readme",
+  "description": "",
+  "devDependencies": {
+    "@tsconfig/recommended": "^1.0.8",
+    "@types/node": "^22.14.1",
+    "eslint": "^9.25.1",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.31.0"
+  },
+  "dependencies": {
+    "axios": "^1.8.4",
+    "dotenv": "^16.5.0",
+    "neverthrow": "^8.2.0",
+    "tsx": "^4.19.3"
+  }
+}
