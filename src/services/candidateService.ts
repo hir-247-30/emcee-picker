@@ -16,7 +16,7 @@ export function getMessage (candidate: string[]): string {
     const title = process.env['TITLE'] ?? '---';
     const shuffled = shuffle(candidate).join('、');
 
-    return `${title}の司会の候補者順\n${shuffled}`;
+    return `${title}の司会者（候補順）\n${shuffled}`;
 }
 
 function shuffle<T> (array: T[]): T[] {
