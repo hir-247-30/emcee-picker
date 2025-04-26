@@ -1,15 +1,6 @@
-import { err, ok } from 'neverthrow';
-import type { Result } from 'neverthrow';
-
-export function getCandidate (): Result<string[], Error> {
+export function getCandidate (): string[] {
     const undefinedCandidates = process.env['CANDIDATES'] ?? '';
-    const candidates = undefinedCandidates.split(',').filter(v => v);
-
-    if (!candidates.length) {
-        return err(new Error('候補者がいません。'));
-    }
-
-    return ok(candidates);
+    return undefinedCandidates.split(',').filter(v => v);
 }
 
 export function getMessage (candidate: string[]): string {

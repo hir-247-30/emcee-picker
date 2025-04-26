@@ -3,24 +3,28 @@ import { WebClient  } from '@slack/web-api';
 import { err, ok } from 'neverthrow';
 import type { Result } from 'neverthrow';
 
-export function report (message: string): Result<void, Error> {
+export async function report (message: string): Promise<void> {
+    let result: Result<void, Error>;
     const reportType = process.env['REPORT_TYPE'];
 
     switch (reportType) {
         case 'DISCORD':
-            reportByDiscord(message);
+            result = await reportByDiscord(message);
             break;
         case 'SLACK':
-            reportBySlack(message);
+            result = await reportBySlack(message);
             break;
         default:
-            return err(new Error('通知先が正しくありません。'));
+            console.log('通知先が正しくありません。');
+            return;
     }
 
-    return ok();
+    if (result.isErr()) {
+        console.log(result.error.message);
+    }
 }
 
-function reportByDiscord (content: string): void {
+async function reportByDiscord (content: string): Promise<Result<void, Error>> {
     const requestOptions = {
         url    : process.env['DISCORD_REPORT_URL']!,
         method : 'POST',
@@ -28,23 +32,35 @@ function reportByDiscord (content: string): void {
         headers: { 'Content-Type': 'application/json' },
     };
 
-    axiosRequest<void | string>(requestOptions);
+    const response = await axiosRequest<void | string>(requestOptions);
+
+    if (response.isErr()) {
+        return err(new Error(`Discord通知に失敗: ${response.error.message}`));
+    }
+
+    return ok();
 }
 
-async function reportBySlack (text: string): Promise<void> {
+async function reportBySlack (text: string): Promise<Result<void, Error>> {
     const channel = `#${process.env['SLACK_CHANNEL']!}`;
     const client = new WebClient(process.env['SLACK_BOT_OAUTH_TOKEN']!);
 
-    client.chat.postMessage({ channel, text });
+    const response = await client.chat.postMessage({ channel, text });
+
+    if (!response.ok) {
+        return err(new Error(`Slack通知に失敗: ${response.error}`));
+    }
+
+    return ok();
 }
 
-async function axiosRequest<T> (requestOptions: AxiosRequestConfig): Promise<void | T> {
+async function axiosRequest<T> (requestOptions: AxiosRequestConfig): Promise<Result<T, Error>> {
     return axios(requestOptions)
         .then((res: AxiosResponse<T>) => {
-            return res.data;
+            return ok(res.data);
         })
         .catch((e: AxiosError<{ error: string }>) => {
-            console.log(e.message);
+            return err(new Error(e.message));
         }
     );
 }

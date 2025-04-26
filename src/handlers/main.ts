@@ -5,21 +5,16 @@ import { report } from '@services/reportService';
 dotenv.config({ path: '.env' });
 
 function main (): void {
-    const candidateResult = getCandidate();
+    const candidates = getCandidate();
 
-    if (candidateResult.isErr()) {
+    if (!candidates.length) {
         console.log('候補者がいません。');
         return;
     }
 
-    const candidates = candidateResult.value;
     const reportMessage = getMessage(candidates);
 
-    const reportResult = report(reportMessage);
-
-    if (reportResult.isErr()) {
-        console.log('通知に失敗。');
-    }
+    report(reportMessage);
 }
 
 main();
