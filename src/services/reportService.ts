@@ -1,5 +1,5 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { WebClient  } from '@slack/web-api';
+import { WebClient, ErrorCode, WebAPIPlatformError } from '@slack/web-api';
 import { err, ok } from 'neverthrow';
 import type { Result } from 'neverthrow';
 
@@ -45,10 +45,16 @@ async function reportBySlack (text: string): Promise<Result<void, Error>> {
     const channel = `#${process.env['SLACK_CHANNEL']!}`;
     const client = new WebClient(process.env['SLACK_BOT_OAUTH_TOKEN']!);
 
-    const response = await client.chat.postMessage({ channel, text });
+    try {
+        await client.chat.postMessage({ channel, text });
+    } catch (e: unknown) {
+        let errorMessage;
+        const slackError = e as WebAPIPlatformError;
+        if (slackError.code === ErrorCode.PlatformError) {
+            errorMessage = slackError.message;
+        }
 
-    if (!response.ok) {
-        return err(new Error(`Slack通知に失敗: ${response.error}`));
+        return err(new Error(`Slack通知に失敗: ${errorMessage}`));
     }
 
     return ok();
