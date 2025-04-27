@@ -1,11 +1,11 @@
 import  dotenv from 'dotenv';
-import { getCandidate, getMessage } from '@services/candidateService';
+import { getCandidates, getMessage } from '@services/candidateService';
 import { report } from '@services/reportService';
 
 dotenv.config({ path: '.env' });
 
 function main (): void {
-    const candidates = getCandidate();
+    const candidates = getCandidates();
 
     if (!candidates.length) {
         console.log('候補者がいません。');

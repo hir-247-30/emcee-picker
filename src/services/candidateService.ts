@@ -1,11 +1,11 @@
-export function getCandidate (): string[] {
-    const undefinedCandidates = process.env['CANDIDATES'] ?? '';
-    return undefinedCandidates.split(',').filter(v => v);
+export function getCandidates (): string[] {
+    const candidates = process.env['CANDIDATES'] ?? '';
+    return candidates.split(',').filter(v => v);
 }
 
-export function getMessage (candidate: string[]): string {
+export function getMessage (candidates: string[]): string {
     const title = process.env['TITLE'] ?? '---';
-    const shuffled = shuffle(candidate).join('、');
+    const shuffled = shuffle(candidates).join('、');
 
     return `${title}の司会者（候補順）\n${shuffled}`;
 }
