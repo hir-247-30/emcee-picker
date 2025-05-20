@@ -16,6 +16,7 @@
       "allowUnusedLabels": false,
       "allowUnreachableCode": false,
       "paths": {
+        "@handlers/*": ["./src/handlers/*"],
         "@services/*": ["./src/services/*"],
       },
     },

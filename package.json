@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "main": "tsx src/handlers/main.ts",
+    "aws-serverless": "node esbuild.config.mjs && cd dist && zip upload.zip aws-serverless.mjs",
     "format": "npx eslint . --fix --ext .ts",
     "test": "npx tsc --noEmit && npx eslint . --ext .ts"
   },
@@ -25,7 +26,9 @@
   "description": "",
   "devDependencies": {
     "@tsconfig/recommended": "^1.0.8",
+    "@types/aws-lambda": "^8.10.149",
     "@types/node": "^22.14.1",
+    "esbuild": "^0.25.4",
     "eslint": "^9.25.1",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.31.0"

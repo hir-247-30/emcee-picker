@@ -4,7 +4,7 @@ import { report } from '@services/reportService';
 
 dotenv.config({ path: '.env' });
 
-function main (): void {
+export async function main (): Promise<void> {
     const candidates = getCandidates();
 
     if (!candidates.length) {
@@ -14,7 +14,7 @@ function main (): void {
 
     const reportMessage = getMessage(candidates);
 
-    report(reportMessage);
+    await report(reportMessage);
 }
 
-main();
+await main();
