@@ -1,24 +1,33 @@
 {
-    "extends": "@tsconfig/recommended/tsconfig.json",
-    "compilerOptions": {
-      "target": "esnext",
-      "module": "esnext",
-      "moduleResolution": "node",
-      "strictBuiltinIteratorReturn": true,
-      "noUnusedLocals": true,
-      "noUnusedParameters": true,
-      "exactOptionalPropertyTypes": true,
-      "noImplicitReturns": true,
-      "noFallthroughCasesInSwitch": true,
-      "noUncheckedIndexedAccess": true,
-      "noImplicitOverride": true,
-      "noPropertyAccessFromIndexSignature": true,
-      "allowUnusedLabels": false,
-      "allowUnreachableCode": false,
-      "paths": {
-        "@handlers/*": ["./src/handlers/*"],
-        "@services/*": ["./src/services/*"],
-      },
+  "extends": "@tsconfig/recommended/tsconfig.json",
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "strictBuiltinIteratorReturn": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false,
+    "paths": {
+      "@handlers/*": ["./src/handlers/*"],
+      "@services/*": ["./src/services/*"]
     },
-    "include": ["./src/**/*.ts"],
-  }
+    "types": ["vitest/globals"]
+  },
+  "include": [
+    "./src/**/*.ts",
+    "./src/**/*.test.ts"
+  ],
+  "exclude": [
+    "./dist",
+    "./node_modules",
+    "./coverage"
+  ]
+}

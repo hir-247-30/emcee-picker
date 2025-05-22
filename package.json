@@ -6,8 +6,11 @@
   "scripts": {
     "main": "tsx src/handlers/main.ts",
     "aws-serverless": "node esbuild.config.mjs && cd dist && zip upload.zip aws-serverless.mjs",
-    "format": "npx eslint . --fix --ext .ts",
-    "test": "npx tsc --noEmit && npx eslint . --ext .ts"
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "tsc --noEmit && vitest --run",
+    "test:watch": "tsc --noEmit && vitest --watch",
+    "coverage": "vitest --run --coverage"
   },
   "engines": {
     "node": ">=22.0.0",
@@ -25,13 +28,18 @@
   "homepage": "https://github.com/hir-247-30/emcee-picker#readme",
   "description": "",
   "devDependencies": {
+    "@stylistic/eslint-plugin": "^4.2.0",
     "@tsconfig/recommended": "^1.0.8",
     "@types/aws-lambda": "^8.10.149",
     "@types/node": "^22.14.1",
+    "@vitest/coverage-v8": "^3.1.4",
+    "@vitest/eslint-plugin": "^1.2.0",
     "esbuild": "^0.25.4",
     "eslint": "^9.25.1",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.31.0"
+    "typescript-eslint": "^8.31.0",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.1.4"
   },
   "dependencies": {
     "@slack/web-api": "^7.9.1",
