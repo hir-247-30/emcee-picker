@@ -1,4 +1,4 @@
-import  dotenv from 'dotenv';
+import dotenv from 'dotenv';
 import { getCandidates, getMessage } from '@services/candidateService';
 import { report } from '@services/reportService';
 
