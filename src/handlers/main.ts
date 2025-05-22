@@ -1,6 +1,6 @@
-import dotenv from 'dotenv';
 import { getCandidates, getMessage } from '@services/candidateService';
 import { report } from '@services/reportService';
+import dotenv from 'dotenv';
 
 dotenv.config({ path: '.env' });
 

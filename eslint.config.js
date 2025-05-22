@@ -1,8 +1,9 @@
-import { defineConfig, globalIgnores } from 'eslint/config';
 import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
 import stylistic from '@stylistic/eslint-plugin';
 import vitest from '@vitest/eslint-plugin';
+import { defineConfig, globalIgnores } from 'eslint/config';
+import importPlugin from 'eslint-plugin-import-x';
+import tseslint from 'typescript-eslint';
 
 export default defineConfig(
     globalIgnores(['dist', 'coverage', 'node_modules']),
@@ -20,6 +21,15 @@ export default defineConfig(
         files  : ['**/*.{js,ts,mjs}'],
         plugins: {
             '@stylistic': stylistic,
+            'import'    : importPlugin,
+        },
+        settings: {
+            'import/resolver': {
+                typescript: {
+                    alwaysTryTypes: true,
+                    project       : './tsconfig.json',
+                }
+            },
         },
         rules: {
             '@stylistic/space-before-function-paren': 'error',
@@ -30,6 +40,33 @@ export default defineConfig(
                 beforeColon: false,
                 afterColon : true,
                 align      : 'colon',
+            }],
+            '@stylistic/operator-linebreak': ['error', 'before', {
+                overrides: {
+                    '=': 'none',
+                },
+            }],
+            
+            // import順のルール
+            'import/order': ['error', {
+                'groups'          : ['builtin', 'external', 'internal', 'parent', 'sibling', 'index', 'object', 'type'],
+                'newlines-between': 'always',
+                'alphabetize'     : {
+                    'order'          : 'asc',
+                    'caseInsensitive': true
+                },
+                'pathGroups': [
+                    {
+                        'pattern' : '@handlers/**',
+                        'group'   : 'internal',
+                        'position': 'before'
+                    },
+                    {
+                        'pattern' : '@services/**',
+                        'group'   : 'internal',
+                        'position': 'before'
+                    }
+                ],
             }],
         },
     },
@@ -51,11 +88,11 @@ export default defineConfig(
             sourceType: 'module',
         },
     },
-    // テストファイル用: VitestグローバルAPI
+    // テスト
     {
-        files  : ['**/*.test.ts'],
+        files  : ['src/**/*.test.ts'],
         plugins: {
-            '@vitest': vitest,
+            'vitest': vitest,
         },
         rules: {
             ...vitest.configs.recommended.rules,

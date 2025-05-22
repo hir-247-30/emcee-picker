@@ -1,6 +1,7 @@
-import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { WebClient } from '@slack/web-api';
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { err, ok } from 'neverthrow';
+
 import type { Result } from 'neverthrow';
 
 export async function report (message: string): Promise<void> {

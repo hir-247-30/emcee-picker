@@ -1,5 +1,6 @@
 import * as candidateService from '@services/candidateService';
 import * as reportService from '@services/reportService';
+
 import { main } from './main';
 
 describe('main', () => {

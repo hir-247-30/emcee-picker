@@ -1,8 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { report } from '@services/reportService';
 import axios from 'axios';
 
-// mockがよくわからん、理解できてない。
 const postMessageMock = vi.fn();
 
 vi.mock('axios');

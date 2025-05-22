@@ -1,4 +1,3 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getCandidates, getMessage } from '@services/candidateService';
 
 // envをこねくり回してテストする必要があるので、envをメソッドインジェクションできるようにする
@@ -52,14 +51,14 @@ describe('getMessage', () => {
         expect(msg.startsWith('定例会議の司会者（候補順）')).toBe(true);
     });
 
-    // getMessageに関係ない
+    // 本来、getMessageに関係ない
     it('候補者が1人の場合も正しく出力される', () => {
         process.env['TITLE'] = 'テスト会議';
         const msg = getMessage(['A']);
         expect(msg).toContain('A');
     });
 
-    // getMessageに関係ない
+    // 本来、getMessageに関係ない
     it('候補者が複数の場合も正しく出力される', () => {
         process.env['TITLE'] = 'テスト会議';
         const msg = getMessage(['A', 'B', 'C']);

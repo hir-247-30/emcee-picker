@@ -1,5 +1,5 @@
-import { Handler, ProxyResult } from 'aws-lambda';
 import { main } from '@handlers/main';
+import { Handler, ProxyResult } from 'aws-lambda';
 
 export const handler: Handler = async (): Promise<ProxyResult> => {
     await main();

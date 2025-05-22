@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as mainModule from '../main';
+
 import { handler } from './serverless';
+
 import type { Context } from 'aws-lambda';
 
-// こんなテスト見たことないぞ。
 describe('handler', () => {
     beforeEach(() => {
         vi.restoreAllMocks();
@@ -27,7 +27,6 @@ describe('handler', () => {
         };
     }
 
-    // このテストいみあんのか？
     it('mainが呼ばれ、200レスポンスを返す', async () => {
         const mainMock = vi.spyOn(mainModule, 'main').mockResolvedValue();
         const result = await handler({}, createDummyContext(), () => { /* noop */ }) as {
