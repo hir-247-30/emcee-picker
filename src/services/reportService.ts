@@ -1,6 +1,7 @@
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { WebClient, ErrorCode, WebAPIPlatformError } from '@slack/web-api';
+import { WebClient } from '@slack/web-api';
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { err, ok } from 'neverthrow';
+
 import type { Result } from 'neverthrow';
 
 export async function report (message: string): Promise<void> {
@@ -26,13 +27,13 @@ export async function report (message: string): Promise<void> {
 
 async function reportByDiscord (content: string): Promise<Result<void, Error>> {
     const requestOptions = {
-        url    : process.env['DISCORD_REPORT_URL']!,
+        url    : process.env['DISCORD_REPORT_URL'] ?? '',
         method : 'POST',
         data   : { content },
         headers: { 'Content-Type': 'application/json' },
-    };
+    } as const;
 
-    const response = await axiosRequest<void | string>(requestOptions);
+    const response = await axiosRequest<string | undefined>(requestOptions);
 
     if (response.isErr()) {
         return err(new Error(`Discord通知に失敗: ${response.error.message}`));
@@ -42,31 +43,35 @@ async function reportByDiscord (content: string): Promise<Result<void, Error>> {
 }
 
 async function reportBySlack (text: string): Promise<Result<void, Error>> {
-    const channel = `#${process.env['SLACK_CHANNEL']!}`;
-    const client = new WebClient(process.env['SLACK_BOT_OAUTH_TOKEN']!);
+    const channel = `#${process.env['SLACK_CHANNEL'] ?? ''}`;
+    const client = new WebClient(process.env['SLACK_BOT_OAUTH_TOKEN']);
 
     try {
         await client.chat.postMessage({ channel, text });
-    } catch (e: unknown) {
-        let errorMessage;
-        const slackError = e as WebAPIPlatformError;
-        if (slackError.code === ErrorCode.PlatformError) {
-            errorMessage = slackError.message;
-        }
+    }
+    catch (e: unknown) {
+        const message = e instanceof Error
+            ? e.message
+            : '予期しないエラーが発生しました';
 
-        return err(new Error(`Slack通知に失敗: ${errorMessage}`));
+        return err(new Error(`Slack通知に失敗: ${message}`));
     }
 
     return ok();
 }
 
-async function axiosRequest<T> (requestOptions: AxiosRequestConfig): Promise<Result<T, Error>> {
+async function axiosRequest<T> (
+    requestOptions: AxiosRequestConfig,
+): Promise<Result<T, Error>> {
     return axios(requestOptions)
         .then((res: AxiosResponse<T>) => {
             return ok(res.data);
         })
-        .catch((e: AxiosError<{ error: string }>) => {
-            return err(new Error(e.message));
-        }
-    );
+        .catch((e: unknown) => {
+            const error = e instanceof Error
+                ? e
+                : new Error('予期しないエラーが発生しました');
+
+            return err(error);
+        });
 }

@@ -1,0 +1,30 @@
+---
+description: テスト戦略ガイド
+globs: 
+alwaysApply: false
+---
+# テスト戦略ガイド
+
+本プロジェクトのテスト戦略は以下の通りです：
+
+## 1. ユニットテスト
+- サービスやユーティリティ関数など、個々のロジック単位でテストを実施します。
+- 依存関係はモックやスタブを活用し、単体の動作を担保します。
+- テストファイルは各モジュール直下に *.test.ts ファイルを作成
+- 例: [src/services/candidateService.test.ts](mdc:src/services/candidateService.test.ts)
+
+## 2. 統合テスト・機能テスト
+- サービス間の連携や、ハンドラー・ルーティングなど「全体の流れ」を検証します。
+- 主要な依存サービスはモックしつつ、アプリケーションの主要なフローが壊れていないかを担保します。
+- 例: [src/handlers/main.test.ts](mdc:src/handlers/main.test.ts)
+
+## 3. テストカバレッジ目標
+- ユニットテスト+統合テスト・機能テストで、全体の95%程度のカバレッジを目指します。
+- 異常系や例外パターンも積極的にテストします。
+
+## 4. E2Eテスト
+- 本番同様の環境や外部サービス連携まで担保する必要が生じた場合のみ、E2Eテストを追加検討します。
+- コスト・運用性を考慮し、現状は必須としません。
+
+## 参考
+- honoの統合テスト例: [src/hono.test.ts (GitHub)](mdc:https:/github.com/honojs/hono/blob/main/src/hono.test.ts)
