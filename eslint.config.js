@@ -90,7 +90,7 @@ export default defineConfig(
     },
     // テスト
     {
-        files  : ['src/**/*.test.ts'],
+        files  : ['src/test/**/*.ts'],
         plugins: {
             'vitest': vitest,
         },
