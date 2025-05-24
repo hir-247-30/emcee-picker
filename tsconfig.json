@@ -22,8 +22,7 @@
     "types": ["vitest/globals"]
   },
   "include": [
-    "./src/**/*.ts",
-    "./src/**/*.test.ts"
+    "./src/**/*.ts"
   ],
   "exclude": [
     "./dist",

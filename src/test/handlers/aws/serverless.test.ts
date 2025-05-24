@@ -1,6 +1,5 @@
-import * as mainModule from '../main';
-
-import { handler } from './serverless';
+import { handler } from '@handlers/aws/serverless';
+import * as mainModule from '@handlers/main';
 
 import type { Context } from 'aws-lambda';
 
