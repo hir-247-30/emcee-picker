@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "main": "tsx src/handlers/main.ts",
-    "aws-serverless": "node esbuild.config.mjs && cd dist && zip upload.zip aws-serverless.mjs",
+    "aws-serverless": "node esbuild.config.mjs && cd dist && zip upload.zip index.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "tsc --noEmit && vitest --run",
