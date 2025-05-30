@@ -22,7 +22,7 @@ await esbuild
         entryPoints: ['src/handlers/aws/serverless.ts'],
         minify     : true,
         bundle     : true,
-        outfile    : 'dist/aws-serverless.mjs',
+        outfile    : 'dist/index.mjs',
         format     : 'esm',
         platform   : 'node',
         define,
