@@ -1,4 +1,4 @@
-import { report } from '@services/reportService';
+import { execReport } from '@services/reportService';
 import axios from 'axios';
 
 const postMessageMock = vi.fn();
@@ -14,7 +14,7 @@ vi.mock('@slack/web-api', () => {
 });
 
 // env問題
-describe('report', () => {
+describe('execReport', () => {
     const OLD_ENV = process.env;
     beforeEach(() => {
         vi.clearAllMocks();
@@ -35,7 +35,7 @@ describe('report', () => {
 
         // なんでspyいれてる？
         const spy = vi.spyOn(console, 'log');
-        await report('test message');
+        await execReport('test message');
         expect(axios).toHaveBeenCalled();
         spy.mockRestore();
     });
@@ -45,14 +45,14 @@ describe('report', () => {
         process.env['SLACK_BOT_OAUTH_TOKEN'] = 'xoxb-test';
         process.env['SLACK_CHANNEL'] = 'general';
         postMessageMock.mockResolvedValue({});
-        await report('test message');
+        await execReport('test message');
         expect(postMessageMock).toHaveBeenCalled();
     });
 
     it('REPORT_TYPEが不正な場合はエラーを出力する', async () => {
         process.env['REPORT_TYPE'] = 'UNKNOWN';
         const spy = vi.spyOn(console, 'log');
-        await report('test message');
+        await execReport('test message');
         expect(spy).toHaveBeenCalledWith('通知先が正しくありません。');
         spy.mockRestore();
     });
