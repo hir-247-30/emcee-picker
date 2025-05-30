@@ -33,10 +33,10 @@ export async function skipReport (today: Date): Promise<boolean> {
     if (!JSON.parse(process.env['SKIP_HOLIDAYS'])) return false;
 
     const requestOptions = {
-        url    : 'https://holidays-jp.github.io/api/v1/date.json',
-        method : 'GET',
+        url   : 'https://holidays-jp.github.io/api/v1/date.json',
+        method: 'GET',
     } as const;
-    const response = await axiosRequest<{[key: string]: string}>(requestOptions);
+    const response = await axiosRequest<Record<string, string>>(requestOptions);
 
     // フェイルソフト
     if (response.isErr()) {
@@ -46,7 +46,7 @@ export async function skipReport (today: Date): Promise<boolean> {
     const holidayList = response.value;
 
     // YYYY-MM-DD
-    return (holidayList[today.toISOString().slice(0, 10)] !== undefined)
+    return (holidayList[today.toISOString().slice(0, 10)] !== undefined);
 }
 
 async function reportByDiscord (content: string): Promise<Result<void, Error>> {
