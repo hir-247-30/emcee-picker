@@ -39,14 +39,19 @@ export async function skipReport (today: Date): Promise<boolean> {
     const response = await axiosRequest<Record<string, string>>(requestOptions);
 
     // フェイルソフト
-    if (response.isErr()) {
-        return false;
-    }
+    if (response.isErr()) return false;
 
     const holidayList = response.value;
 
-    // YYYY-MM-DD
-    return (holidayList[today.toISOString().slice(0, 10)] !== undefined);
+    // JST YYYY-MM-DD
+    const formattedToday = today.toLocaleDateString('ja-JP', {
+        year    : 'numeric',
+        month   : '2-digit',
+        day     : '2-digit',
+        timeZone: 'Asia/Tokyo'
+    }).replace(/\//g, '-');
+
+    return (holidayList[formattedToday] !== undefined);
 }
 
 async function reportByDiscord (content: string): Promise<Result<void, Error>> {
