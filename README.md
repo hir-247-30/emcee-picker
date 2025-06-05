@@ -14,7 +14,7 @@
 - SLACK_BOT_OAUTH_TOKEN
 - SLACK_CHANNEL
   - 通知タイプをSlackにした時のSlack APIのOAuth Tokenと通知先チャンネル。
-SKIP_HOLIDAYS
+- SKIP_HOLIDAYS
   - 休日だったら通知をスキップするか。
 
 ### 使い方
