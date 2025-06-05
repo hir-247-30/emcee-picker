@@ -1,5 +1,5 @@
 import { getCandidates, getMessage } from '@services/candidateService';
-import { report } from '@services/reportService';
+import { skipReport, execReport } from '@services/reportService';
 import dotenv from 'dotenv';
 
 dotenv.config({ path: '.env' });
@@ -12,9 +12,14 @@ export async function main (): Promise<void> {
         return;
     }
 
+    if (await skipReport(new Date)) {
+        console.log('休日なのでスキップします。');
+        return;
+    }
+
     const reportMessage = getMessage(candidates);
 
-    await report(reportMessage);
+    await execReport(reportMessage);
 }
 
 await main();
