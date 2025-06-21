@@ -14,6 +14,8 @@
 - SLACK_BOT_OAUTH_TOKEN
 - SLACK_CHANNEL
   - 通知タイプをSlackにした時のSlack APIのOAuth Tokenと通知先チャンネル。
+- SKIP_HOLIDAYS
+  - 休日だったら通知をスキップするか。
 
 ### 使い方
 
@@ -31,3 +33,4 @@ npm run main
 週に一回、決まった曜日などをcronで設定して実行するとよし。
 
 [AWS環境デプロイ](./DEPLOY_TF.md)
+=======

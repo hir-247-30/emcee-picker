@@ -4,7 +4,7 @@ import { err, ok } from 'neverthrow';
 
 import type { Result } from 'neverthrow';
 
-export async function report (message: string): Promise<void> {
+export async function execReport (message: string): Promise<void> {
     let result: Result<void, Error>;
     const reportType = process.env['REPORT_TYPE'];
 
@@ -23,6 +23,35 @@ export async function report (message: string): Promise<void> {
     if (result.isErr()) {
         console.log(result.error.message);
     }
+}
+
+export async function skipReport (today: Date): Promise<boolean> {
+    // 未定義
+    if (process.env['SKIP_HOLIDAYS'] === undefined) return false;
+
+    // スキップをしない設定
+    if (!JSON.parse(process.env['SKIP_HOLIDAYS'])) return false;
+
+    const requestOptions = {
+        url   : 'https://holidays-jp.github.io/api/v1/date.json',
+        method: 'GET',
+    } as const;
+    const response = await axiosRequest<Record<string, string>>(requestOptions);
+
+    // フェイルソフト
+    if (response.isErr()) return false;
+
+    const holidayList = response.value;
+
+    // JST YYYY-MM-DD
+    const formattedToday = today.toLocaleDateString('ja-JP', {
+        year    : 'numeric',
+        month   : '2-digit',
+        day     : '2-digit',
+        timeZone: 'Asia/Tokyo'
+    }).replace(/\//g, '-');
+
+    return (holidayList[formattedToday] !== undefined);
 }
 
 async function reportByDiscord (content: string): Promise<Result<void, Error>> {
