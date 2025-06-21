@@ -1,14 +1,16 @@
-import { CloudwatchEventRule } from '@cdktf/provider-aws/lib/cloudwatch-event-rule';
-import { CloudwatchEventTarget } from '@cdktf/provider-aws/lib/cloudwatch-event-target';
 import { CloudwatchLogGroup } from '@cdktf/provider-aws/lib/cloudwatch-log-group';
 import { DataAwsIamPolicyDocument } from '@cdktf/provider-aws/lib/data-aws-iam-policy-document';
 import { IamRole } from '@cdktf/provider-aws/lib/iam-role';
+import { IamRolePolicy } from '@cdktf/provider-aws/lib/iam-role-policy';
 import { IamRolePolicyAttachment } from '@cdktf/provider-aws/lib/iam-role-policy-attachment';
 import { LambdaFunction } from '@cdktf/provider-aws/lib/lambda-function';
-import { LambdaPermission } from '@cdktf/provider-aws/lib/lambda-permission';
 import { AwsProvider } from '@cdktf/provider-aws/lib/provider';
+import { SchedulerSchedule } from '@cdktf/provider-aws/lib/scheduler-schedule';
 import { App, TerraformStack, TerraformOutput } from 'cdktf';
 import { Construct } from 'constructs';
+import { config } from 'dotenv';
+
+config();
 
 class EmceePickerStack extends TerraformStack {
     constructor (scope: Construct, id: string) {
@@ -41,6 +43,7 @@ class EmceePickerStack extends TerraformStack {
             ],
         });
 
+        // Lambda ロール
         const lambdaRole = new IamRole(this, 'LambdaRole', {
             name            : 'emcee-picker-lambda-role',
             assumeRolePolicy: lambdaAssumeRolePolicy.json,
@@ -50,6 +53,43 @@ class EmceePickerStack extends TerraformStack {
         new IamRolePolicyAttachment(this, 'LambdaBasicExecution', {
             role     : lambdaRole.name,
             policyArn: 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
+        });
+
+        // EventBridge Scheduler用のIAMポリシー
+        const schedulerAssumeRolePolicy = new DataAwsIamPolicyDocument(this, 'SchedulerAssumeRolePolicy', {
+            statement: [
+                {
+                    actions   : ['sts:AssumeRole'],
+                    effect    : 'Allow',
+                    principals: [
+                        {
+                            type       : 'Service',
+                            identifiers: ['scheduler.amazonaws.com'],
+                        },
+                    ],
+                },
+            ],
+        });
+
+        // EventBridge ロール
+        const schedulerRole = new IamRole(this, 'SchedulerRole', {
+            name            : 'emcee-picker-scheduler-role',
+            assumeRolePolicy: schedulerAssumeRolePolicy.json,
+        });
+
+        // Scheduler用Lambda呼び出しポリシー
+        new IamRolePolicy(this, 'SchedulerLambdaInvokePolicy', {
+            role  : schedulerRole.id,
+            policy: JSON.stringify({
+                Version  : '2012-10-17',
+                Statement: [
+                    {
+                        Effect  : 'Allow',
+                        Action  : 'lambda:InvokeFunction',
+                        Resource: `arn:aws:lambda:ap-northeast-1:*:function:emcee-picker`,
+                    },
+                ],
+            }),
         });
 
 
@@ -78,28 +118,20 @@ class EmceePickerStack extends TerraformStack {
             reservedConcurrentExecutions: 1, // 重複実行の防止
         });
 
-        // EventBridge 実行ルール
-        const eventRule = new CloudwatchEventRule(this, 'DailyExecutionRule', {
-            name              : 'emcee-picker-execution',
-            description       : 'Lambdaの実行スケジューラ',
-            scheduleExpression: process.env['AWS_FUNCTION_EXECUTION_SCHEDULE'] ?? 'cron(0 0 * * ? *)',
-            state             : 'ENABLED',
-        });
-
-        // EventBridge ターゲット
-        new CloudwatchEventTarget(this, 'LambdaTarget', {
-            rule    : eventRule.name,
-            targetId: 'EmceePickerLambdaTarget',
-            arn     : lambdaFunction.arn,
-        });
-
-        // EventBridge → Lambda の認可
-        new LambdaPermission(this, 'AllowEventBridge', {
-            statementId : 'AllowExecutionFromEventBridge',
-            action      : 'lambda:InvokeFunction',
-            functionName: lambdaFunction.functionName,
-            principal   : 'events.amazonaws.com',
-            sourceArn   : eventRule.arn,
+        // EventBridge 実行スケジューラ
+        const schedulerSchedule = new SchedulerSchedule(this, 'DailyExecutionSchedule', {
+            name                      : 'emcee-picker-execution',
+            description               : 'Lambdaの実行スケジューラ',
+            scheduleExpression        : process.env['AWS_FUNCTION_EXECUTION_SCHEDULE'] ?? 'cron(0 0 * * ? *)',
+            scheduleExpressionTimezone: 'Asia/Tokyo',
+            state                     : 'ENABLED',
+            flexibleTimeWindow        : {
+                mode: 'OFF',
+            },
+            target: {
+                arn    : lambdaFunction.arn,
+                roleArn: schedulerRole.arn,
+            },
         });
 
         new TerraformOutput(this, 'lambda_function_name', {
@@ -110,8 +142,8 @@ class EmceePickerStack extends TerraformStack {
             value: lambdaFunction.arn,
         });
 
-        new TerraformOutput(this, 'eventbridge_rule_name', {
-            value: eventRule.name,
+        new TerraformOutput(this, 'eventbridge_schedule_name', {
+            value: schedulerSchedule.name,
         });
 
         new TerraformOutput(this, 'cloudwatch_log_group_name', {
