@@ -2,3 +2,8 @@ dist/
 node_modules/
 .env
 coverage/
+cdktf.out/
+.gen
+.terraform
+terraform.tfstate*
+.claude

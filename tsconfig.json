@@ -23,11 +23,13 @@
   },
   "include": [
     "./src/**/*.ts",
-    "./src/**/*.test.ts"
+    "./src/**/*.test.ts",
+    "./deploy/**/*.ts"
   ],
   "exclude": [
     "./dist",
     "./node_modules",
-    "./coverage"
+    "./coverage",
+    "./cdktf.out"
   ]
 }

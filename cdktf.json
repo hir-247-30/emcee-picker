@@ -1,0 +1,14 @@
+{
+  "language": "typescript",
+  "app": "npx ts-node deploy/tf/main.ts",
+  "projectId": "emcee-picker-terraform",
+  "sendCrashReports": "false",
+  "terraformProviders": [
+    "aws@~> 5.0"
+  ],
+  "terraformModules": [],
+  "context": {
+    "excludeStackIdFromLogicalIds": "true",
+    "allowSepCharsInLogicalIds": "true"
+  }
+}

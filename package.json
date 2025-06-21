@@ -10,7 +10,12 @@
     "lint:fix": "eslint . --fix",
     "test": "tsc --noEmit && vitest --run",
     "test:watch": "tsc --noEmit && vitest --watch",
-    "coverage": "vitest --run --coverage"
+    "coverage": "vitest --run --coverage",
+    "tf:get": "cdktf get",
+    "tf:synth": "cdktf synth",
+    "tf:deploy": "cdktf deploy",
+    "tf:destroy": "cdktf destroy",
+    "tf:diff": "cdktf diff"
   },
   "engines": {
     "node": ">=22.0.0",
@@ -45,8 +50,11 @@
     "vitest": "^3.1.4"
   },
   "dependencies": {
+    "@cdktf/provider-aws": "^19.0.0",
     "@slack/web-api": "^7.9.1",
     "axios": "^1.8.4",
+    "cdktf": "^0.20.0",
+    "constructs": "^10.0.0",
     "dotenv": "^16.5.0",
     "neverthrow": "^8.2.0",
     "tsx": "^4.19.3"
