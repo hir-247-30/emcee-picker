@@ -1,6 +1,6 @@
 {
   "language": "typescript",
-  "app": "npx ts-node deploy/tf/main.ts",
+  "app": "npx tsx deploy/tf/main.ts",
   "projectId": "emcee-picker-terraform",
   "sendCrashReports": "false",
   "terraformProviders": [

@@ -62,8 +62,8 @@ class EmceePickerStack extends TerraformStack {
       runtime: 'nodejs22.x',
       timeout: 30,
       memorySize: 256,
-      filename: 'dist/upload.zip',
-      sourceCodeHash: '${filebase64sha256("dist/upload.zip")}',
+      filename: '../../../dist/upload.zip',
+      sourceCodeHash: '${filebase64sha256("../../../dist/upload.zip")}',
       environment: {
         variables: {
           NODE_ENV: 'production',

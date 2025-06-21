@@ -6,7 +6,7 @@ import importPlugin from 'eslint-plugin-import-x';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig(
-    globalIgnores(['dist', 'coverage', 'node_modules', 'deploy']),
+    globalIgnores(['dist', 'coverage', 'node_modules', 'deploy', '.gen', 'cdktf.out']),
     eslint.configs.recommended,
     {
         languageOptions: {
