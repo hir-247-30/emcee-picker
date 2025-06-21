@@ -85,7 +85,7 @@ npm run tf:get
 
 ## 4. 環境変数の設定
 
-README.mdに従って.envファイルを修正してください。
+README.mdに従って.envファイルを準備してください。
 
 ## 5. Lambda パッケージの準備
 
