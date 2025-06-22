@@ -1,4 +1,5 @@
 import { CloudwatchLogGroup } from '@cdktf/provider-aws/lib/cloudwatch-log-group';
+import { DataAwsCallerIdentity } from '@cdktf/provider-aws/lib/data-aws-caller-identity';
 import { DataAwsIamPolicyDocument } from '@cdktf/provider-aws/lib/data-aws-iam-policy-document';
 import { IamRole } from '@cdktf/provider-aws/lib/iam-role';
 import { IamRolePolicy } from '@cdktf/provider-aws/lib/iam-role-policy';
@@ -20,6 +21,9 @@ class EmceePickerStack extends TerraformStack {
         new AwsProvider(this, 'AWS', {
             region: 'ap-northeast-1',
         });
+
+        // 現在のAWSアカウント情報を取得
+        const current = new DataAwsCallerIdentity(this, 'current', {});
 
         // CloudWatch Log グループの登録
         const logGroup = new CloudwatchLogGroup(this, 'LambdaLogGroup', {
@@ -55,6 +59,26 @@ class EmceePickerStack extends TerraformStack {
             policyArn: 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
         });
 
+        // CloudWatch Logs読み取りポリシー
+        new IamRolePolicy(this, 'LambdaCloudWatchLogsReadPolicy', {
+            role  : lambdaRole.id,
+            policy: JSON.stringify({
+                Version  : '2012-10-17',
+                Statement: [
+                    {
+                        Effect: 'Allow',
+                        Action: [
+                            'logs:FilterLogEvents',
+                        ],
+                        Resource: [
+                            `arn:aws:logs:ap-northeast-1:${current.accountId}:log-group:/aws/lambda/emcee-picker`,
+                            `arn:aws:logs:ap-northeast-1:${current.accountId}:log-group:/aws/lambda/emcee-picker:*`,
+                        ],
+                    },
+                ],
+            }),
+        });
+
         // EventBridge Scheduler用のIAMポリシー
         const schedulerAssumeRolePolicy = new DataAwsIamPolicyDocument(this, 'SchedulerAssumeRolePolicy', {
             statement: [
@@ -86,7 +110,7 @@ class EmceePickerStack extends TerraformStack {
                     {
                         Effect  : 'Allow',
                         Action  : 'lambda:InvokeFunction',
-                        Resource: `arn:aws:lambda:ap-northeast-1:*:function:emcee-picker`,
+                        Resource: `arn:aws:lambda:ap-northeast-1:${current.accountId}:function:emcee-picker`,
                     },
                 ],
             }),
@@ -128,8 +152,11 @@ class EmceePickerStack extends TerraformStack {
                 mode: 'OFF',
             },
             target: {
-                arn    : lambdaFunction.arn,
-                roleArn: schedulerRole.arn,
+                arn        : lambdaFunction.arn,
+                roleArn    : schedulerRole.arn,
+                retryPolicy: {
+                    maximumRetryAttempts: 0,
+                },
             },
         });
 
