@@ -115,7 +115,6 @@ class EmceePickerStack extends TerraformStack {
                     SKIP_HOLIDAYS        : process.env['SKIP_HOLIDAYS'] ?? 'true',
                 },
             },
-            reservedConcurrentExecutions: 1, // 重複実行の防止
         });
 
         // EventBridge 実行スケジューラ

@@ -121,3 +121,16 @@ npm run tf:deploy
 ```bash
 npm run tf:destroy
 ```
+
+# 設定
+
+`.env` ファイルに下記を設定。
+
+- AWS_LOGS_RETENSION_DAYS
+  - CloudWatchLogsのログ保管期間（単位：日）
+- AWS_FUNCTION_TIMEOUT
+  - Lambda関数の実行時間のタイムアウト（単位：秒）
+- AWS_FUNCTION_MEMORY_SIZE
+  - Lambda関数の実行時メモリ割当て（単位：MB）
+- AWS_FUNCTION_EXECUTION_SCHEDULE
+  - Lambda関数を実行するスケジュール（Quartz cron形式・日本時間）

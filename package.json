@@ -13,7 +13,7 @@
     "coverage": "vitest --run --coverage",
     "tf:get": "cdktf get",
     "tf:synth": "cdktf synth",
-    "tf:deploy": "cdktf deploy",
+    "tf:deploy": "npm run aws-serverless && cdktf deploy",
     "tf:destroy": "cdktf destroy",
     "tf:diff": "cdktf diff"
   },
