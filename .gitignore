@@ -1,4 +1,9 @@
+terraform.*.tfstate
+terraform.*.tfstate.backup
 dist/
 node_modules/
-.env
 coverage/
+cdktf.out/
+.gen
+.claude
+.env

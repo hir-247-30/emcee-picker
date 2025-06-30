@@ -31,3 +31,5 @@ npm run main
 候補者 `CANDIDATES` をランダムに並び変えた上で `REPORT_TYPE` に指定した先に通知を行う。
 
 週に一回、決まった曜日などをcronで設定して実行するとよし。
+
+[AWS環境デプロイ](./DEPLOY_TF.md)
