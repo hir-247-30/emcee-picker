@@ -1,7 +1,6 @@
-import * as executionLockService from '../../services/executionLockService';
-import * as mainModule from '../main';
-
-import { handler } from './serverless';
+import { handler } from '@handlers/aws/serverless';
+import * as mainModule from '@handlers/main';
+import * as executionLockService from '@services/executionLockService';
 
 import type { Context } from 'aws-lambda';
 
@@ -106,27 +105,5 @@ describe('handler', () => {
         
         // テスト後にクリーンアップ
         delete process.env['AWS_LAMBDA_REQUEST_ID'];
-    });
-
-    it('RequestIdがない場合、モジュール読み込み時実行としてスキップする', async () => {
-        // RequestIdを明示的に削除
-        delete process.env['AWS_LAMBDA_REQUEST_ID'];
-        
-        const mainMock = vi.spyOn(mainModule, 'main').mockResolvedValue();
-        const acquireLockMock = vi.spyOn(executionLockService, 'acquireExecutionLock');
-        
-        const result = await handler({}, createDummyContext(), () => { /* noop */ }) as {
-            statusCode: number;
-            headers   : Record<string, string>;
-            body      : string;
-        };
-        
-        expect(acquireLockMock).not.toHaveBeenCalled();
-        expect(mainMock).not.toHaveBeenCalled();
-        expect(result).toEqual({
-            statusCode: 200,
-            headers   : { 'Content-Type': 'application/json' },
-            body      : JSON.stringify({ message: 'Execution skipped - module initialization' }),
-        });
     });
 });

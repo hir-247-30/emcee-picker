@@ -4,7 +4,7 @@
   "main": "src/handlers/main.ts",
   "type": "module",
   "scripts": {
-    "main": "tsx src/handlers/main.ts",
+    "report": "tsx src/handlers/cli/exec.ts",
     "aws-serverless": "node esbuild.config.mjs && cd dist && zip upload.zip index.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
