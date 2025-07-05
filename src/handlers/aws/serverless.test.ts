@@ -29,10 +29,12 @@ describe('handler', () => {
     }
 
     it('mainが呼ばれ、200レスポンスを返す', async () => {
+        // RequestIdを設定してLambda環境をシミュレート
+        process.env['AWS_LAMBDA_REQUEST_ID'] = 'test-request-id';
+        
         const mainMock = vi.spyOn(mainModule, 'main').mockResolvedValue();
         const { ok } = await import('neverthrow');
-        const checkDuplicateMock = vi.spyOn(executionLockService, 'checkDuplicateExecution').mockResolvedValue(ok(false));
-        const logExecutionStartMock = vi.spyOn(executionLockService, 'logExecutionStart').mockImplementation(() => undefined);
+        const acquireLockMock = vi.spyOn(executionLockService, 'acquireExecutionLock').mockResolvedValue(ok(true));
         
         const result = await handler({}, createDummyContext(), () => { /* noop */ }) as {
             statusCode: number;
@@ -40,21 +42,25 @@ describe('handler', () => {
             body      : string;
         };
         
-        expect(checkDuplicateMock).toHaveBeenCalled();
-        expect(logExecutionStartMock).toHaveBeenCalled();
+        expect(acquireLockMock).toHaveBeenCalled();
         expect(mainMock).toHaveBeenCalled();
         expect(result).toEqual({
             statusCode: 200,
             headers   : { 'Content-Type': 'application/json' },
             body      : JSON.stringify({ message: 'Execution completed successfully' }),
         });
+        
+        // テスト後にクリーンアップ
+        delete process.env['AWS_LAMBDA_REQUEST_ID'];
     });
 
-    it('重複実行チェックでエラーが発生した場合、フェイルソフトで処理を継続する', async () => {
+    it('ロック取得でエラーが発生した場合、フェイルソフトで処理を継続する', async () => {
+        // RequestIdを設定してLambda環境をシミュレート
+        process.env['AWS_LAMBDA_REQUEST_ID'] = 'test-request-id';
+        
         const mainMock = vi.spyOn(mainModule, 'main').mockResolvedValue();
         const { err } = await import('neverthrow');
-        const checkDuplicateMock = vi.spyOn(executionLockService, 'checkDuplicateExecution').mockResolvedValue(err(new Error('CloudWatch error')));
-        const logExecutionStartMock = vi.spyOn(executionLockService, 'logExecutionStart').mockImplementation(() => undefined);
+        const acquireLockMock = vi.spyOn(executionLockService, 'acquireExecutionLock').mockResolvedValue(err(new Error('S3 error')));
         const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
         
         const result = await handler({}, createDummyContext(), () => { /* noop */ }) as {
@@ -63,21 +69,26 @@ describe('handler', () => {
             body      : string;
         };
         
-        expect(checkDuplicateMock).toHaveBeenCalled();
-        expect(consoleErrorSpy).toHaveBeenCalledWith('重複実行チェックに失敗:', 'CloudWatch error');
-        expect(logExecutionStartMock).toHaveBeenCalled();
+        expect(acquireLockMock).toHaveBeenCalled();
+        expect(consoleErrorSpy).toHaveBeenCalledWith('実行ロック取得に失敗:', 'S3 error');
         expect(mainMock).toHaveBeenCalled();
         expect(result).toEqual({
             statusCode: 200,
             headers   : { 'Content-Type': 'application/json' },
             body      : JSON.stringify({ message: 'Execution completed successfully' }),
         });
+        
+        // テスト後にクリーンアップ
+        delete process.env['AWS_LAMBDA_REQUEST_ID'];
     });
 
-    it('重複実行が検出された場合、実行をスキップする', async () => {
+    it('ロック取得に失敗した場合、実行をスキップする', async () => {
+        // RequestIdを設定してLambda環境をシミュレート
+        process.env['AWS_LAMBDA_REQUEST_ID'] = 'test-request-id';
+        
         const mainMock = vi.spyOn(mainModule, 'main').mockResolvedValue();
         const { ok } = await import('neverthrow');
-        const checkDuplicateMock = vi.spyOn(executionLockService, 'checkDuplicateExecution').mockResolvedValue(ok(true));
+        const acquireLockMock = vi.spyOn(executionLockService, 'acquireExecutionLock').mockResolvedValue(ok(false));
         
         const result = await handler({}, createDummyContext(), () => { /* noop */ }) as {
             statusCode: number;
@@ -85,12 +96,37 @@ describe('handler', () => {
             body      : string;
         };
         
-        expect(checkDuplicateMock).toHaveBeenCalled();
+        expect(acquireLockMock).toHaveBeenCalled();
         expect(mainMock).not.toHaveBeenCalled();
         expect(result).toEqual({
             statusCode: 200,
             headers   : { 'Content-Type': 'application/json' },
-            body      : JSON.stringify({ message: 'Execution skipped - already executed this minute' }),
+            body      : JSON.stringify({ message: 'Execution skipped - lock already acquired by another instance' }),
+        });
+        
+        // テスト後にクリーンアップ
+        delete process.env['AWS_LAMBDA_REQUEST_ID'];
+    });
+
+    it('RequestIdがない場合、モジュール読み込み時実行としてスキップする', async () => {
+        // RequestIdを明示的に削除
+        delete process.env['AWS_LAMBDA_REQUEST_ID'];
+        
+        const mainMock = vi.spyOn(mainModule, 'main').mockResolvedValue();
+        const acquireLockMock = vi.spyOn(executionLockService, 'acquireExecutionLock');
+        
+        const result = await handler({}, createDummyContext(), () => { /* noop */ }) as {
+            statusCode: number;
+            headers   : Record<string, string>;
+            body      : string;
+        };
+        
+        expect(acquireLockMock).not.toHaveBeenCalled();
+        expect(mainMock).not.toHaveBeenCalled();
+        expect(result).toEqual({
+            statusCode: 200,
+            headers   : { 'Content-Type': 'application/json' },
+            body      : JSON.stringify({ message: 'Execution skipped - module initialization' }),
         });
     });
 });

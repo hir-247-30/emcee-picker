@@ -6,6 +6,9 @@ import { IamRolePolicy } from '@cdktf/provider-aws/lib/iam-role-policy';
 import { IamRolePolicyAttachment } from '@cdktf/provider-aws/lib/iam-role-policy-attachment';
 import { LambdaFunction } from '@cdktf/provider-aws/lib/lambda-function';
 import { AwsProvider } from '@cdktf/provider-aws/lib/provider';
+import { S3Bucket } from '@cdktf/provider-aws/lib/s3-bucket';
+import { S3BucketLifecycleConfiguration } from '@cdktf/provider-aws/lib/s3-bucket-lifecycle-configuration';
+import { S3BucketPublicAccessBlock } from '@cdktf/provider-aws/lib/s3-bucket-public-access-block';
 import { SchedulerSchedule } from '@cdktf/provider-aws/lib/scheduler-schedule';
 import { App, TerraformStack, TerraformOutput } from 'cdktf';
 import { Construct } from 'constructs';
@@ -29,6 +32,42 @@ class EmceePickerStack extends TerraformStack {
         const logGroup = new CloudwatchLogGroup(this, 'LambdaLogGroup', {
             name           : '/aws/lambda/emcee-picker',
             retentionInDays: Number(process.env['AWS_LOGS_RETENSION_DAYS']) || 7,
+        });
+
+        // S3バケット作成（ロック用）
+        const lockBucket = new S3Bucket(this, 'ExecutionLockBucket', {
+            bucket      : `emcee-picker-locks-${current.accountId}`,
+            forceDestroy: true,
+        });
+
+        // S3バケットのパブリックアクセスをブロック
+        new S3BucketPublicAccessBlock(this, 'ExecutionLockBucketPAB', {
+            bucket               : lockBucket.id,
+            blockPublicAcls      : true,
+            blockPublicPolicy    : true,
+            ignorePublicAcls     : true,
+            restrictPublicBuckets: true,
+        });
+
+        // S3 Lifecycle Policy（古いロックファイルを自動削除）
+        new S3BucketLifecycleConfiguration(this, 'ExecutionLockBucketLifecycle', {
+            bucket: lockBucket.id,
+            rule  : [
+                {
+                    id    : 'delete-old-locks',
+                    status: 'Enabled',
+                    filter: [
+                        {
+                            prefix: 'locks/', // ロックファイルのみ対象
+                        },
+                    ],
+                    expiration: [
+                        {
+                            days: 1, // 最小値
+                        },
+                    ],
+                },
+            ],
         });
 
         // Lambda 用 IAM Role
@@ -59,8 +98,8 @@ class EmceePickerStack extends TerraformStack {
             policyArn: 'arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole',
         });
 
-        // CloudWatch Logs読み取りポリシー
-        new IamRolePolicy(this, 'LambdaCloudWatchLogsReadPolicy', {
+        // S3アクセスポリシー（ロック機能用）
+        new IamRolePolicy(this, 'LambdaS3LockPolicy', {
             role  : lambdaRole.id,
             policy: JSON.stringify({
                 Version  : '2012-10-17',
@@ -68,12 +107,11 @@ class EmceePickerStack extends TerraformStack {
                     {
                         Effect: 'Allow',
                         Action: [
-                            'logs:FilterLogEvents',
+                            's3:PutObject',
+                            's3:GetObject',
+                            's3:DeleteObject',
                         ],
-                        Resource: [
-                            `arn:aws:logs:ap-northeast-1:${current.accountId}:log-group:/aws/lambda/emcee-picker`,
-                            `arn:aws:logs:ap-northeast-1:${current.accountId}:log-group:/aws/lambda/emcee-picker:*`,
-                        ],
+                        Resource: `${lockBucket.arn}/*`,
                     },
                 ],
             }),
@@ -123,7 +161,7 @@ class EmceePickerStack extends TerraformStack {
             role          : lambdaRole.arn,
             handler       : 'index.handler',
             runtime       : 'nodejs22.x',
-            timeout       : Number(process.env['AWS_FUNCTION_TIMEOUT']) || 30,
+            timeout       : Number(process.env['AWS_FUNCTION_TIMEOUT']) || 15,
             memorySize    : Number(process.env['AWS_FUNCTION_MEMORY_SIZE']) || 256,
             filename      : '../../../dist/upload.zip',
             sourceCodeHash: '${filebase64sha256("../../../dist/upload.zip")}',
@@ -137,6 +175,7 @@ class EmceePickerStack extends TerraformStack {
                     SLACK_BOT_OAUTH_TOKEN: process.env['SLACK_BOT_OAUTH_TOKEN'] ?? '',
                     SLACK_CHANNEL        : process.env['SLACK_CHANNEL'] ?? '',
                     SKIP_HOLIDAYS        : process.env['SKIP_HOLIDAYS'] ?? 'true',
+                    LOCK_BUCKET_NAME     : lockBucket.bucket,
                 },
             },
         });
@@ -174,6 +213,10 @@ class EmceePickerStack extends TerraformStack {
 
         new TerraformOutput(this, 'cloudwatch_log_group_name', {
             value: logGroup.name,
+        });
+
+        new TerraformOutput(this, 's3_lock_bucket_name', {
+            value: lockBucket.bucket,
         });
     }
 }

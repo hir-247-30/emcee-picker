@@ -1,42 +1,46 @@
-import { CloudWatchLogsClient, FilterLogEventsCommand } from '@aws-sdk/client-cloudwatch-logs';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { err, ok } from 'neverthrow';
 
 import type { Result } from 'neverthrow';
 
-const EXECUTION_START_MESSAGE = 'EMCEE_PICKER_EXECUTION_START';
-const LOG_GROUP_NAME = '/aws/lambda/emcee-picker';
+const BUCKET_NAME = process.env['LOCK_BUCKET_NAME'] ?? 'emcee-picker-locks';
+const s3Client = new S3Client({ region: 'ap-northeast-1' });
 
-export async function checkDuplicateExecution (): Promise<Result<boolean, Error>> {
+export async function acquireExecutionLock (): Promise<Result<boolean, Error>> {
+    const startTime = new Date().toISOString();
     try {
-        const client = new CloudWatchLogsClient({ region: 'ap-northeast-1' });
+        const currentTime = new Date();
+        const currentMinute = currentTime.toISOString().slice(0, 16); // "2024-12-22T09:00"
+        const lockKey = `locks/emcee-picker-${currentMinute}`;
         
-        // 現在時刻の分まで取得 (YYYY-MM-DD HH:MM)
-        const now = new Date();
-        const currentMinute = now.toISOString().slice(0, 16); // "2024-12-22T09:00"
-        
-        // 同じ分の開始時刻と終了時刻を計算
-        const startTime = new Date(currentMinute + ':00.000Z').getTime();
-        const endTime = new Date(currentMinute + ':59.999Z').getTime();
+        // 実行ID（より詳細なタイムスタンプ+ランダム要素）
+        const executionId = `${currentTime.toISOString()}-${Math.random().toString(36).slice(2, 11)}`;
+        console.log(`[${startTime}] 実行ID: ${executionId}`);
 
-        const command = new FilterLogEventsCommand({
-            logGroupName : LOG_GROUP_NAME,
-            startTime,
-            endTime,
-            filterPattern: EXECUTION_START_MESSAGE,
-        });
+        console.log(`[${startTime}] ロック取得試行開始: ${lockKey}`);
 
-        const response = await client.send(command);
+        await s3Client.send(new PutObjectCommand({
+            Bucket     : BUCKET_NAME,
+            Key        : lockKey,
+            Body       : executionId, // 実行IDを記録
+            IfNoneMatch: '*', // オブジェクトが存在しない場合のみ作成
+        }));
+
+        // ロック取得成功
+        console.log(`[${startTime}] ロック取得成功: ${lockKey}`);
+        return ok(true);
         
-        // 既に実行ログが存在する場合はtrue（重複実行）
-        const isDuplicate = (response.events?.length ?? 0) > 0;
+    } catch (error: unknown) {
+        if (error instanceof Error && error.name === 'PreconditionFailed') {
+            // 他の実行が既にロックを取得済み
+            console.log(`[${startTime}] ロック取得失敗 - 他のインスタンスが既に取得済み`);
+            return ok(false);
+        }
         
-        return ok(isDuplicate);
-    } catch (e: unknown) {
-        const eMessage = e instanceof Error ? e.message : 'CloudWatch Logsのチェックに失敗しました';
-        return err(new Error(eMessage));
+        // その他のエラー（S3接続エラーなど）
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error(`[${startTime}] ロック取得エラー: ${message}`);
+        return err(new Error(`Failed to acquire execution lock: ${message}`));
     }
 }
 
-export function logExecutionStart (): void {
-    console.log(EXECUTION_START_MESSAGE);
-}
