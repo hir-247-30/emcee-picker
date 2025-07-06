@@ -15,6 +15,7 @@ export async function acquireExecutionLock (): Promise<Result<boolean, Error>> {
         await s3Client.send(new PutObjectCommand({
             Bucket     : BUCKET_NAME,
             Key        : lockKey,
+            Body       : 'LOCK',
             IfNoneMatch: '*', // オブジェクトが存在しない場合のみ作成
         }));
 

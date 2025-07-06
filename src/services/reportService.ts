@@ -5,18 +5,23 @@ import { err, ok } from 'neverthrow';
 import type { Result } from 'neverthrow';
 
 export async function execReport (message: string): Promise<void> {
+    let result: Result<void, Error>;
     const reportType = process.env['REPORT_TYPE'];
 
     switch (reportType) {
         case 'DISCORD':
-            await reportByDiscord(message);
+            result = await reportByDiscord(message);
             break;
         case 'SLACK':
-            await reportBySlack(message);
+            result = await reportBySlack(message);
             break;
         default:
-            console.log('通知先が正しくありません。');
+            console.error('通知先が正しくありません。');
             return;
+    }
+
+    if (result.isErr()) {
+        console.error(result.error.message);
     }
 }
 
@@ -49,7 +54,7 @@ export async function skipReport (today: Date): Promise<boolean> {
     return (holidayList[formattedToday] !== undefined);
 }
 
-async function reportByDiscord (content: string): Promise<Result<void, Error>> {    
+async function reportByDiscord (content: string): Promise<Result<void, Error>> {
     const requestOptions = {
         url    : process.env['DISCORD_REPORT_URL'] ?? '',
         method : 'POST',
@@ -66,7 +71,7 @@ async function reportByDiscord (content: string): Promise<Result<void, Error>> {
     return ok();
 }
 
-async function reportBySlack (text: string): Promise<Result<void, Error>> {    
+async function reportBySlack (text: string): Promise<Result<void, Error>> {
     const channel = `#${process.env['SLACK_CHANNEL'] ?? ''}`;
     const client = new WebClient(process.env['SLACK_BOT_OAUTH_TOKEN']);
 

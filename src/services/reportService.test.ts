@@ -51,7 +51,7 @@ describe('execReport', () => {
 
     it('REPORT_TYPEが不正な場合はエラーを出力する', async () => {
         process.env['REPORT_TYPE'] = 'UNKNOWN';
-        const spy = vi.spyOn(console, 'log');
+        const spy = vi.spyOn(console, 'error');
         await execReport('test message');
         expect(spy).toHaveBeenCalledWith('通知先が正しくありません。');
         spy.mockRestore();

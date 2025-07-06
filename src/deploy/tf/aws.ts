@@ -161,7 +161,7 @@ class EmceePickerStack extends TerraformStack {
             role          : lambdaRole.arn,
             handler       : 'index.handler',
             runtime       : 'nodejs22.x',
-            timeout       : Number(process.env['AWS_FUNCTION_TIMEOUT']) || 15,
+            timeout       : Number(process.env['AWS_FUNCTION_TIMEOUT']) || 30,
             memorySize    : Number(process.env['AWS_FUNCTION_MEMORY_SIZE']) || 256,
             filename      : '../../../dist/upload.zip',
             sourceCodeHash: '${filebase64sha256("../../../dist/upload.zip")}',
@@ -191,11 +191,8 @@ class EmceePickerStack extends TerraformStack {
                 mode: 'OFF',
             },
             target: {
-                arn        : lambdaFunction.arn,
-                roleArn    : schedulerRole.arn,
-                retryPolicy: {
-                    maximumRetryAttempts: 0,
-                },
+                arn    : lambdaFunction.arn,
+                roleArn: schedulerRole.arn,
             },
         });
 
