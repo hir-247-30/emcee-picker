@@ -46,7 +46,7 @@ describe('handler', () => {
         expect(result).toEqual({
             statusCode: 200,
             headers   : { 'Content-Type': 'application/json' },
-            body      : JSON.stringify({ message: 'Execution completed successfully' }),
+            body      : JSON.stringify({ message: '完了' }),
         });
         
         // テスト後にクリーンアップ
@@ -74,7 +74,7 @@ describe('handler', () => {
         expect(result).toEqual({
             statusCode: 200,
             headers   : { 'Content-Type': 'application/json' },
-            body      : JSON.stringify({ message: 'Execution completed successfully' }),
+            body      : JSON.stringify({ message: '完了' }),
         });
         
         // テスト後にクリーンアップ
@@ -100,7 +100,7 @@ describe('handler', () => {
         expect(result).toEqual({
             statusCode: 200,
             headers   : { 'Content-Type': 'application/json' },
-            body      : JSON.stringify({ message: 'Execution skipped - lock already acquired by another instance' }),
+            body      : JSON.stringify({ message: '重複実行なのでスキップ' }),
         });
         
         // テスト後にクリーンアップ

@@ -28,8 +28,8 @@ export async function acquireExecutionLock (): Promise<Result<boolean, Error>> {
         }
         
         // その他のエラー（S3接続エラーなど）
-        const message = error instanceof Error ? error.message : '';
-        return err(new Error(`Failed to acquire execution lock: ${message}`));
+        const message = error instanceof Error ? error.message : '<不明なエラー>';
+        return err(new Error(message));
     }
 }
 

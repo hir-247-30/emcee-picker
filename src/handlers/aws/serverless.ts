@@ -16,7 +16,7 @@ export const handler: Handler = async (): Promise<ProxyResult> => {
             headers   : {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ message: 'Execution skipped - lock already acquired by another instance' }),
+            body: JSON.stringify({ message: '重複実行なのでスキップ' }),
         };
     }
 
@@ -27,6 +27,6 @@ export const handler: Handler = async (): Promise<ProxyResult> => {
         headers   : {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: 'Execution completed successfully' }),
+        body: JSON.stringify({ message: '完了' }),
     };
 };
