@@ -178,6 +178,9 @@ class EmceePickerStack extends TerraformStack {
                     LOCK_BUCKET_NAME     : lockBucket.bucket,
                 },
             },
+            lifecycle: {
+                ignoreChanges: ['environment.0.variables'],
+            },
         });
 
         // EventBridge 実行スケジューラ
