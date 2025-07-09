@@ -4,6 +4,7 @@ import { IamRole } from '@cdktf/provider-aws/lib/iam-role';
 import { IamRolePolicy } from '@cdktf/provider-aws/lib/iam-role-policy';
 import { IamRolePolicyAttachment } from '@cdktf/provider-aws/lib/iam-role-policy-attachment';
 import { LambdaFunction } from '@cdktf/provider-aws/lib/lambda-function';
+import { LambdaPermission } from '@cdktf/provider-aws/lib/lambda-permission';
 import { AwsProvider } from '@cdktf/provider-aws/lib/provider';
 import { SchedulerSchedule } from '@cdktf/provider-aws/lib/scheduler-schedule';
 import { App, TerraformStack, TerraformOutput } from 'cdktf';
@@ -24,7 +25,7 @@ class EmceePickerStack extends TerraformStack {
         // CloudWatch Log グループの登録
         const logGroup = new CloudwatchLogGroup(this, 'LambdaLogGroup', {
             name           : '/aws/lambda/emcee-picker',
-            retentionInDays: Number(process.env['AWS_LOGS_RETENSION_DAYS']) || 7,
+            retentionInDays: Number(process.env['AWS_LOGS_RETENTION_DAYS']) || 7,
         });
 
         // Lambda 用 IAM Role
@@ -77,23 +78,7 @@ class EmceePickerStack extends TerraformStack {
             assumeRolePolicy: schedulerAssumeRolePolicy.json,
         });
 
-        // Scheduler用Lambda呼び出しポリシー
-        new IamRolePolicy(this, 'SchedulerLambdaInvokePolicy', {
-            role  : schedulerRole.id,
-            policy: JSON.stringify({
-                Version  : '2012-10-17',
-                Statement: [
-                    {
-                        Effect  : 'Allow',
-                        Action  : 'lambda:InvokeFunction',
-                        Resource: `arn:aws:lambda:ap-northeast-1:*:function:emcee-picker`,
-                    },
-                ],
-            }),
-        });
-
-
-        // Lambda 本体
+        // Lambda 本体を先に定義
         const lambdaFunction = new LambdaFunction(this, 'EmceePickerLambda', {
             functionName  : 'emcee-picker',
             role          : lambdaRole.arn,
@@ -115,7 +100,25 @@ class EmceePickerStack extends TerraformStack {
                     SKIP_HOLIDAYS        : process.env['SKIP_HOLIDAYS'] ?? 'true',
                 },
             },
+            dependsOn: [logGroup],
         });
+
+        // Scheduler用Lambda呼び出しポリシー
+        new IamRolePolicy(this, 'SchedulerLambdaInvokePolicy', {
+            name  : 'emcee-picker-scheduler-invoke-lambda-policy',
+            role  : schedulerRole.name,
+            policy: JSON.stringify({
+                Version  : '2012-10-17',
+                Statement: [
+                    {
+                        Effect  : 'Allow',
+                        Action  : 'lambda:InvokeFunction',
+                        Resource: lambdaFunction.arn,
+                    },
+                ],
+            }),
+        });
+
 
         // EventBridge 実行スケジューラ
         const schedulerSchedule = new SchedulerSchedule(this, 'DailyExecutionSchedule', {
@@ -131,6 +134,14 @@ class EmceePickerStack extends TerraformStack {
                 arn    : lambdaFunction.arn,
                 roleArn: schedulerRole.arn,
             },
+        });
+
+        // Lambda Permissionの設定
+        new LambdaPermission(this, 'SchedulerInvokePermission', {
+            statementId : 'AllowEventBridgeSchedulerInvoke',
+            action      : 'lambda:InvokeFunction',
+            functionName: lambdaFunction.functionName,
+            principal   : 'scheduler.amazonaws.com',
         });
 
         new TerraformOutput(this, 'lambda_function_name', {
