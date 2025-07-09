@@ -135,7 +135,6 @@ class EmceePickerStack extends TerraformStack {
             },
         });
 
-
         new TerraformOutput(this, 'lambda_function_name', {
             value: lambdaFunction.functionName,
         });
