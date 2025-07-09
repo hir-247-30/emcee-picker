@@ -4,7 +4,6 @@ import { IamRole } from '@cdktf/provider-aws/lib/iam-role';
 import { IamRolePolicy } from '@cdktf/provider-aws/lib/iam-role-policy';
 import { IamRolePolicyAttachment } from '@cdktf/provider-aws/lib/iam-role-policy-attachment';
 import { LambdaFunction } from '@cdktf/provider-aws/lib/lambda-function';
-import { LambdaPermission } from '@cdktf/provider-aws/lib/lambda-permission';
 import { AwsProvider } from '@cdktf/provider-aws/lib/provider';
 import { SchedulerSchedule } from '@cdktf/provider-aws/lib/scheduler-schedule';
 import { App, TerraformStack, TerraformOutput } from 'cdktf';
@@ -136,13 +135,6 @@ class EmceePickerStack extends TerraformStack {
             },
         });
 
-        // Lambda Permissionの設定
-        new LambdaPermission(this, 'SchedulerInvokePermission', {
-            statementId : 'AllowEventBridgeSchedulerInvoke',
-            action      : 'lambda:InvokeFunction',
-            functionName: lambdaFunction.functionName,
-            principal   : 'scheduler.amazonaws.com',
-        });
 
         new TerraformOutput(this, 'lambda_function_name', {
             value: lambdaFunction.functionName,
