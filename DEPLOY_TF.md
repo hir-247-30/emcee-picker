@@ -126,7 +126,7 @@ npm run tf:destroy
 
 `.env` ファイルに下記を設定。
 
-- AWS_LOGS_RETENSION_DAYS
+- AWS_LOGS_RETENTION_DAYS
   - CloudWatchLogsのログ保管期間（単位：日）
 - AWS_FUNCTION_TIMEOUT
   - Lambda関数の実行時間のタイムアウト（単位：秒）
