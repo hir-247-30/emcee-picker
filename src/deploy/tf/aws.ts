@@ -162,10 +162,6 @@ class EmceePickerStack extends TerraformStack {
                     LOCK_BUCKET_NAME     : lockBucket.bucket,
                 },
             },
-            lifecycle: {
-                ignoreChanges: ['environment.0.variables'],
-            },
-            dependsOn: [logGroup],
         });
 
         // Scheduler用Lambda呼び出しポリシー
