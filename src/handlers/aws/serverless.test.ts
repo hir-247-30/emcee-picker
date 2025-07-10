@@ -1,6 +1,6 @@
-import * as mainModule from '../main';
-
-import { handler } from './serverless';
+import { handler } from '@handlers/aws/serverless';
+import * as mainModule from '@handlers/main';
+import * as executionLockService from '@services/executionLockService';
 
 import type { Context } from 'aws-lambda';
 
@@ -28,17 +28,82 @@ describe('handler', () => {
     }
 
     it('mainが呼ばれ、200レスポンスを返す', async () => {
+        // RequestIdを設定してLambda環境をシミュレート
+        process.env['AWS_LAMBDA_REQUEST_ID'] = 'test-request-id';
+        
         const mainMock = vi.spyOn(mainModule, 'main').mockResolvedValue();
+        const { ok } = await import('neverthrow');
+        const acquireLockMock = vi.spyOn(executionLockService, 'acquireExecutionLock').mockResolvedValue(ok(true));
+        
         const result = await handler({}, createDummyContext(), () => { /* noop */ }) as {
             statusCode: number;
             headers   : Record<string, string>;
             body      : string;
         };
+        
+        expect(acquireLockMock).toHaveBeenCalled();
         expect(mainMock).toHaveBeenCalled();
         expect(result).toEqual({
             statusCode: 200,
             headers   : { 'Content-Type': 'application/json' },
-            body      : JSON.stringify(''),
+            body      : JSON.stringify({ message: '完了' }),
         });
+        
+        // テスト後にクリーンアップ
+        delete process.env['AWS_LAMBDA_REQUEST_ID'];
+    });
+
+    it('ロック取得でエラーが発生した場合、フェイルソフトで処理を継続する', async () => {
+        // RequestIdを設定してLambda環境をシミュレート
+        process.env['AWS_LAMBDA_REQUEST_ID'] = 'test-request-id';
+        
+        const mainMock = vi.spyOn(mainModule, 'main').mockResolvedValue();
+        const { err } = await import('neverthrow');
+        const acquireLockMock = vi.spyOn(executionLockService, 'acquireExecutionLock').mockResolvedValue(err(new Error('S3 error')));
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+        
+        const result = await handler({}, createDummyContext(), () => { /* noop */ }) as {
+            statusCode: number;
+            headers   : Record<string, string>;
+            body      : string;
+        };
+        
+        expect(acquireLockMock).toHaveBeenCalled();
+        expect(consoleErrorSpy).toHaveBeenCalledWith('実行ロック取得に失敗:', 'S3 error');
+        expect(mainMock).toHaveBeenCalled();
+        expect(result).toEqual({
+            statusCode: 200,
+            headers   : { 'Content-Type': 'application/json' },
+            body      : JSON.stringify({ message: '完了' }),
+        });
+        
+        // テスト後にクリーンアップ
+        delete process.env['AWS_LAMBDA_REQUEST_ID'];
+    });
+
+    it('ロック取得に失敗した場合、実行をスキップする', async () => {
+        // RequestIdを設定してLambda環境をシミュレート
+        process.env['AWS_LAMBDA_REQUEST_ID'] = 'test-request-id';
+        
+        const mainMock = vi.spyOn(mainModule, 'main').mockResolvedValue();
+        const { ok } = await import('neverthrow');
+        const acquireLockMock = vi.spyOn(executionLockService, 'acquireExecutionLock').mockResolvedValue(ok(false));
+        
+        const result = await handler({}, createDummyContext(), () => { /* noop */ }) as {
+            statusCode: number;
+            headers   : Record<string, string>;
+            body      : string;
+        };
+        
+        expect(acquireLockMock).toHaveBeenCalled();
+        expect(mainMock).not.toHaveBeenCalled();
+        expect(result).toEqual({
+            statusCode: 200,
+            headers   : { 'Content-Type': 'application/json' },
+            body      : JSON.stringify({ message: '重複実行なのでスキップ' }),
+        });
+        
+        // テスト後にクリーンアップ
+        delete process.env['AWS_LAMBDA_REQUEST_ID'];
     });
 });

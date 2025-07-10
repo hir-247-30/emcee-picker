@@ -21,5 +21,3 @@ export async function main (): Promise<void> {
 
     await execReport(reportMessage);
 }
-
-await main();

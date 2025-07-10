@@ -16,12 +16,12 @@ export async function execReport (message: string): Promise<void> {
             result = await reportBySlack(message);
             break;
         default:
-            console.log('通知先が正しくありません。');
+            console.error('通知先が正しくありません。');
             return;
     }
 
     if (result.isErr()) {
-        console.log(result.error.message);
+        console.error(result.error.message);
     }
 }
 
